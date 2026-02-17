@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PC Remote Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #edf3fb;
+  --panel: rgba(255,255,255,.88);
+  --line: #d4deec;
+  --text: #10223e;
+  --muted: #5f7089;
+  --brand: #0e7490;
+  --brand-deep: #095d73;
+  --ok: #15803d;
+  --warn: #b45309;
+  --bad: #b91c1c;
+  --radius: 16px;
+  --shadow: 0 18px 44px rgba(16,34,62,.14);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+  color: var(--text);
+  background: linear-gradient(150deg, #eef4fb, #e4eef9 55%, #dceaf7);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+.glow {
+  position: fixed;
+  border-radius: 999px;
+  filter: blur(28px);
+  z-index: -1;
+  pointer-events: none;
+}
+.glow.a {
+  width: 18rem;
+  height: 18rem;
+  top: -5rem;
+  right: -4rem;
+  background: rgba(14,116,144,.22);
+}
+.glow.b {
+  width: 22rem;
+  height: 22rem;
+  left: -8rem;
+  bottom: -8rem;
+  background: rgba(2,132,199,.18);
+}
+.app {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 12px 22px;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.top h1 {
+  margin: 0;
+  font-family: "Sora", sans-serif;
+  font-size: 1.36rem;
+  letter-spacing: -.01em;
+}
+.top p {
+  margin: 4px 0 0;
+  font-size: .86rem;
+  color: var(--muted);
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 999px;
+  padding: 8px 11px;
+  border: 1px solid transparent;
+  font-size: .74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+.status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.status.online { color: var(--ok); background: rgba(21,128,61,.1); border-color: rgba(21,128,61,.24); }
+.status.warning { color: var(--warn); background: rgba(180,83,9,.1); border-color: rgba(180,83,9,.24); }
+.status.offline { color: var(--bad); background: rgba(185,28,28,.1); border-color: rgba(185,28,28,.24); }
+.status.checking { color: var(--brand); background: rgba(14,116,144,.12); border-color: rgba(14,116,144,.24); }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  margin-bottom: 10px;
+  backdrop-filter: blur(7px);
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.card-head h2 {
+  margin: 0;
+  font-family: "Sora", sans-serif;
+  font-size: .9rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #3c5171;
+}
+.conn-panel { max-height: 360px; overflow: hidden; transition: max-height .25s ease, opacity .2s ease; }
+.conn-panel.closed { max-height: 0; opacity: 0; pointer-events: none; }
+.fields { display: grid; gap: 9px; margin-bottom: 10px; }
+.fields.two { grid-template-columns: 1fr 104px; }
+label {
+  display: block;
+  margin-bottom: 4px;
+  color: #5f7596;
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: #0f213a;
+  padding: 10px 11px;
+  font: inherit;
+  font-size: .92rem;
+}
+input:focus {
+  outline: none;
+  border-color: rgba(14,116,144,.74);
+  box-shadow: 0 0 0 4px rgba(14,116,144,.12);
+}
+.tabbar {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 10px;
+}
+.tabbar::-webkit-scrollbar { display: none; }
+.tab {
+  border: 1px solid #c7d4e8;
+  background: rgba(255,255,255,.72);
+  color: #4c6281;
+  border-radius: 11px;
+  padding: 9px 11px;
+  font-family: "Sora", sans-serif;
+  font-size: .74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tab.active {
+  color: #fff;
+  border-color: rgba(14,116,144,.85);
+  background: linear-gradient(135deg, var(--brand), var(--brand-deep));
+  box-shadow: 0 8px 18px rgba(14,116,144,.24);
+}
+.panel { display: none; }
+.panel.active { display: block; }
+.grid { display: grid; gap: 8px; }
+.grid.two { grid-template-columns: 1fr 1fr; }
+.grid.three { grid-template-columns: repeat(3, 1fr); }
+.grid.four { grid-template-columns: repeat(4, 1fr); }
+.btn {
+  border: 0;
+  border-radius: 12px;
+  min-height: 46px;
+  padding: 10px 8px;
+  font-family: "Sora", sans-serif;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition: transform .12s ease, filter .12s ease;
+}
+.btn:active { transform: scale(.97); }
+.btn.primary { color: #fff; background: linear-gradient(135deg, var(--brand), var(--brand-deep)); }
+.btn.soft { color: #244364; background: #e9f1fc; border: 1px solid #c8d7eb; }
+.btn.good { color: #14532d; background: rgba(21,128,61,.14); border: 1px solid rgba(21,128,61,.25); }
+.btn.warn { color: #7c2d12; background: rgba(245,158,11,.16); border: 1px solid rgba(180,83,9,.26); }
+.btn.bad { color: #7f1d1d; background: rgba(239,68,68,.15); border: 1px solid rgba(185,28,28,.26); }
+.btn.small { min-height: auto; padding: 7px 9px; font-size: .73rem; }
+.btn.span { grid-column: 1 / -1; }
+.inline { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
+.note { margin: 0; color: #59708f; font-size: .79rem; line-height: 1.35; }
+.feature-disabled { opacity: .56; }
+.feature-note {
+  display: none;
+  margin-top: 8px;
+  font-size: .76rem;
+  color: #7c2d12;
+  background: rgba(245,158,11,.15);
+  border: 1px solid rgba(180,83,9,.24);
+  border-radius: 10px;
+  padding: 8px 9px;
+}
+.feature-note.show { display: block; }
+.row { display: flex; align-items: center; gap: 8px; }
+.row input { flex: 1; }
+.slider { width: 100%; height: 9px; border-radius: 999px; background: #d7e4f4; -webkit-appearance: none; appearance: none; }
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid #f8fcff;
+  background: var(--brand);
+}
+.slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; border: 3px solid #f8fcff; background: var(--brand); }
+.volume { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.volume .value { width: 50px; text-align: right; color: var(--brand); font-family: "Sora", sans-serif; font-weight: 700; }
+.stat { margin-bottom: 9px; }
+.stat:last-child { margin-bottom: 0; }
+.stat-head { display: flex; justify-content: space-between; margin-bottom: 4px; color: #435d7f; font-size: .78rem; font-weight: 700; }
+.stat-head .v { color: #0b6282; font-family: "Sora", sans-serif; }
+.bar { height: 9px; border-radius: 999px; background: #d9e6f5; overflow: hidden; }
+.fill { height: 100%; width: 0%; background: linear-gradient(90deg, #0891b2, #0ea5e9); transition: width .42s ease; }
+.fill.warn { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+.uptime { margin-top: 10px; text-align: center; color: #0b6282; font-family: "Sora", sans-serif; font-size: 1.02rem; }
+.screen {
+  margin-top: 10px;
+  min-height: 86px;
+  border: 1px dashed #bbcee6;
+  border-radius: 11px;
+  background: #f4f8ff;
+  color: #587196;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: .81rem;
+  padding: 10px;
+  overflow: hidden;
+}
+.screen img { width: 100%; display: block; }
+.touchpad {
+  height: 240px;
+  border: 1px solid #bdd0e8;
+  border-radius: 14px;
+  background: linear-gradient(165deg, #f8fbff, #edf5ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5a7295;
+  font-size: .82rem;
+  user-select: none;
+  touch-action: none;
+  margin-bottom: 8px;
+}
+.toast {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-82px);
+  max-width: min(90vw, 520px);
+  padding: 10px 14px;
+  border-radius: 11px;
+  font-size: .81rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  box-shadow: 0 10px 28px rgba(16,34,62,.2);
+  z-index: 1000;
+  text-align: center;
+  transition: transform .22s ease;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { color: #14532d; background: rgba(187,247,208,.95); border-color: rgba(21,128,61,.3); }
+.toast.warning { color: #7c2d12; background: rgba(254,215,170,.95); border-color: rgba(180,83,9,.3); }
+.toast.error { color: #7f1d1d; background: rgba(254,202,202,.95); border-color: rgba(185,28,28,.3); }
+@media (max-width: 430px) {
+  .app { padding: 12px 9px 18px; }
+  .fields.two { grid-template-columns: 1fr 95px; }
+  .grid.four { grid-template-columns: 1fr 1fr; }
+  .touchpad { height: 215px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="glow a"></div>
+<div class="glow b"></div>
+<main class="app">
+  <header class="top">
+    <div>
+      <h1>Remote Command Center</h1>
+      <p>Full desktop control from your phone</p>
+    </div>
+    <div id="connState" class="status offline">Not synced</div>
+  </header>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Connection</h2>
+      <button id="connToggle" type="button" class="btn soft small">Hide</button>
+    </div>
+    <div id="connPanel" class="conn-panel open">
+      <div class="fields two">
+        <div>
+          <label for="host">PC IP Address</label>
+          <input id="host" type="text" placeholder="192.168.1.10" autocomplete="off">
+        </div>
+        <div>
+          <label for="port">Port</label>
+          <input id="port" type="number" inputmode="numeric" value="5000">
+        </div>
+      </div>
+      <div class="fields" style="margin-bottom:8px">
+        <div>
+          <label for="secret">Secret Key</label>
+          <input id="secret" type="password" placeholder="Enter your secret key" autocomplete="current-password">
+        </div>
+      </div>
+      <div class="inline">
+        <button class="btn primary" type="button" onclick="testConnection()">Test and Sync</button>
+        <button class="btn soft" type="button" onclick="saveConnection()">Save</button>
+      </div>
+      <p class="note" id="depNote">Run Test and Sync to detect available controls on this PC.</p>
+    </div>
+  </section>
+
+  <nav class="tabbar">
+    <button class="tab active" data-tab="power" type="button">Power</button>
+    <button class="tab" data-tab="media" type="button">Media</button>
+    <button class="tab" data-tab="monitor" type="button">Monitor</button>
+    <button class="tab" data-tab="mouse" type="button">Mouse</button>
+    <button class="tab" data-tab="keyboard" type="button">Keyboard</button>
+  </nav>
+
+  <section id="panel-power" class="panel active">
+    <div class="card" data-feature="power_basic">
+      <div class="card-head"><h2>Basic Power</h2></div>
+      <div class="grid two">
+        <button class="btn soft span" type="button" onclick="sendAction('sleep')">Sleep</button>
+        <button class="btn good" type="button" onclick="sendAction('restart')">Restart</button>
+        <button class="btn bad" type="button" onclick="confirmShutdown()">Shutdown</button>
+      </div>
+      <div class="feature-note" data-note="power_basic"></div>
+    </div>
+
+    <div class="card" data-feature="power_advanced">
+      <div class="card-head"><h2>Advanced Power</h2></div>
+      <div class="grid two">
+        <button class="btn soft" type="button" onclick="sendPower('lock')">Lock Screen</button>
+        <button class="btn soft" type="button" onclick="sendPower('monitor_off')">Turn Monitor Off</button>
+        <button class="btn warn span" type="button" onclick="sendPower('abort')">Abort Scheduled Shutdown</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="scheduleMin" type="number" min="1" max="720" value="30">
+        <button class="btn bad" type="button" onclick="scheduleShutdown()">Schedule</button>
+      </div>
+      <div class="feature-note" data-note="power_advanced"></div>
+    </div>
+  </section>
+
+  <section id="panel-media" class="panel">
+    <div class="card" data-feature="volume">
+      <div class="card-head">
+        <h2>System Volume</h2>
+        <button class="btn soft small" type="button" onclick="fetchVolume()">Refresh</button>
+      </div>
+      <div class="volume">
+        <input id="volSlider" class="slider" type="range" min="0" max="100" value="50" oninput="onVolSlide(this.value, true)" onchange="setVolume(this.value)">
+        <div id="volValue" class="value">50%</div>
+      </div>
+      <div class="grid two">
+        <button class="btn soft" type="button" onclick="setStepVolume(-5)">Volume -</button>
+        <button class="btn soft" type="button" onclick="setStepVolume(5)">Volume +</button>
+        <button id="muteBtn" class="btn soft span" type="button" onclick="toggleMute()">Mute</button>
+      </div>
+      <div class="feature-note" data-note="volume"></div>
+    </div>
+
+    <div class="card" data-feature="media">
+      <div class="card-head"><h2>Media Playback</h2></div>
+      <div class="grid two">
+        <button class="btn soft" type="button" onclick="sendMedia('prev')">Previous</button>
+        <button class="btn primary" type="button" onclick="sendMedia('playpause')">Play or Pause</button>
+        <button class="btn soft" type="button" onclick="sendMedia('next')">Next</button>
+        <button class="btn soft" type="button" onclick="sendMedia('stop')">Stop</button>
+      </div>
+      <div class="grid two" style="margin-top:8px">
+        <button class="btn soft" type="button" onclick="sendMedia('volumedown')">Media Vol -</button>
+        <button class="btn soft" type="button" onclick="sendMedia('volumeup')">Media Vol +</button>
+      </div>
+      <div class="feature-note" data-note="media"></div>
+    </div>
+  </section>
+
+  <section id="panel-monitor" class="panel">
+    <div class="card" data-feature="stats">
+      <div class="card-head">
+        <h2>Live System Stats</h2>
+        <button class="btn soft small" type="button" onclick="fetchStats()">Refresh</button>
+      </div>
+      <div class="stat">
+        <div class="stat-head"><span>CPU</span><span id="cpuVal" class="v">--%</span></div>
+        <div class="bar"><div id="cpuBar" class="fill"></div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-head"><span>RAM</span><span id="ramVal" class="v">--%</span></div>
+        <div class="bar"><div id="ramBar" class="fill"></div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-head"><span>Disk</span><span id="diskVal" class="v">--%</span></div>
+        <div class="bar"><div id="diskBar" class="fill"></div></div>
+      </div>
+      <div id="uptimeVal" class="uptime">Uptime: --</div>
+      <div class="feature-note" data-note="stats"></div>
+    </div>
+
+    <div class="card" data-feature="screenshot">
+      <div class="card-head">
+        <h2>Desktop Screenshot</h2>
+        <button class="btn primary small" type="button" onclick="captureScreenshot()">Capture</button>
+      </div>
+      <div id="screenBox" class="screen">No screenshot yet.</div>
+      <div class="feature-note" data-note="screenshot"></div>
+    </div>
+  </section>
+
+  <section id="panel-mouse" class="panel">
+    <div class="card" data-feature="mouse">
+      <div class="card-head"><h2>Touchpad</h2></div>
+      <div id="touchpad" class="touchpad">Drag to move cursor</div>
+      <div class="grid three">
+        <button class="btn soft" type="button" onclick="sendMouse('click',{button:'left'},true)">Left Click</button>
+        <button class="btn soft" type="button" onclick="sendMouse('doubleclick',{},true)">Double Click</button>
+        <button class="btn soft" type="button" onclick="sendMouse('click',{button:'right'},true)">Right Click</button>
+      </div>
+      <div class="grid two" style="margin-top:8px">
+        <button class="btn soft" type="button" onclick="sendMouse('scroll',{amount:4},true)">Scroll Up</button>
+        <button class="btn soft" type="button" onclick="sendMouse('scroll',{amount:-4},true)">Scroll Down</button>
+      </div>
+      <div class="feature-note" data-note="mouse"></div>
+    </div>
+  </section>
+
+  <section id="panel-keyboard" class="panel">
+    <div class="card" data-feature="keyboard">
+      <div class="card-head"><h2>Text Input</h2></div>
+      <div class="row" style="margin-bottom:8px">
+        <input id="typeInput" type="text" placeholder="Type text to send to PC">
+        <button class="btn primary" type="button" onclick="sendText()">Send</button>
+      </div>
+      <div class="grid three" style="margin-bottom:8px">
+        <button class="btn soft" type="button" onclick="sendKey('enter')">Enter</button>
+        <button class="btn soft" type="button" onclick="sendKey('tab')">Tab</button>
+        <button class="btn soft" type="button" onclick="sendKey('backspace')">Backspace</button>
+      </div>
+      <div class="grid four">
+        <button class="btn soft" type="button" onclick="sendKey('up')">Up</button>
+        <button class="btn soft" type="button" onclick="sendKey('down')">Down</button>
+        <button class="btn soft" type="button" onclick="sendKey('left')">Left</button>
+        <button class="btn soft" type="button" onclick="sendKey('right')">Right</button>
+      </div>
+    </div>
+
+    <div class="card" data-feature="keyboard">
+      <div class="card-head"><h2>Quick Hotkeys</h2></div>
+      <div class="grid two">
+        <button class="btn bad" type="button" onclick="sendHotkey(['alt','f4'])">Alt + F4</button>
+        <button class="btn soft" type="button" onclick="sendHotkey(['win','d'])">Win + D</button>
+        <button class="btn soft" type="button" onclick="sendHotkey(['alt','tab'])">Alt + Tab</button>
+        <button class="btn soft" type="button" onclick="sendHotkey(['ctrl','z'])">Ctrl + Z</button>
+        <button class="btn soft" type="button" onclick="sendHotkey(['ctrl','c'])">Ctrl + C</button>
+        <button class="btn soft" type="button" onclick="sendHotkey(['ctrl','v'])">Ctrl + V</button>
+      </div>
+      <div class="feature-note" data-note="keyboard"></div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const byId = (id) => document.getElementById(id);
+
+const hostInput = byId("host");
+const portInput = byId("port");
+const secretInput = byId("secret");
+const connState = byId("connState");
+const depNote = byId("depNote");
+const connPanel = byId("connPanel");
+const connToggle = byId("connToggle");
+const toastEl = byId("toast");
+const volSlider = byId("volSlider");
+const volValue = byId("volValue");
+const muteBtn = byId("muteBtn");
+const typeInput = byId("typeInput");
+
+const state = {
+  tab: "power",
+  capabilities: null,
+  muted: false,
+  statsTimer: null,
+  toastTimer: null,
+  moveQueue: null,
+  moveTimer: null,
+  moveInFlight: false,
+  volumeTimer: null,
+};
+
+init();
+
+function init() {
+  loadConnection();
+  bindTabs();
+  bindConnectionToggle();
+  bindTypeInput();
+  initTouchpad();
+  setConnectionState("offline", "Not synced");
+  autoSync();
+}
+
+function bindTabs() {
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => switchTab(tab.dataset.tab));
+  });
+}
+
+function switchTab(tabName) {
+  state.tab = tabName;
+
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.tab === tabName);
+  });
+
+  document.querySelectorAll(".panel").forEach((panel) => {
+    panel.classList.toggle("active", panel.id === `panel-${tabName}`);
+  });
+
+  if (tabName === "monitor" && isFeatureEnabled("stats")) {
+    startStatsLoop();
+  } else {
+    stopStatsLoop();
+  }
+
+  if (tabName === "media" && isFeatureEnabled("volume")) {
+    fetchVolume(true);
+  }
+}
+
+function bindConnectionToggle() {
+  connToggle.addEventListener("click", () => {
+    const closing = !connPanel.classList.contains("closed");
+    connPanel.classList.toggle("closed", closing);
+    connPanel.classList.toggle("open", !closing);
+    connToggle.textContent = closing ? "Show" : "Hide";
+  });
+}
+
+function bindTypeInput() {
+  typeInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      sendText();
+    }
+  });
+}
+
+function loadConnection() {
+  hostInput.value = localStorage.getItem("pc_host") || "";
+  portInput.value = localStorage.getItem("pc_port") || "5000";
+  secretInput.value = localStorage.getItem("pc_secret") || "";
+}
+
+function saveConnection(showMessage = true) {
+  localStorage.setItem("pc_host", hostInput.value.trim());
+  localStorage.setItem("pc_port", portInput.value.trim() || "5000");
+  localStorage.setItem("pc_secret", secretInput.value);
+  if (showMessage) {
+    showToast("Connection settings saved.", "success");
+  }
+}
+
+function autoSync() {
+  if (hostInput.value.trim() && portInput.value.trim()) {
+    testConnection({ silent: true });
+  }
+}
+
+function getBaseUrl() {
+  const host = hostInput.value.trim();
+  const port = portInput.value.trim();
+  if (!host) {
+    throw new Error("PC IP address is required.");
+  }
+  if (!port) {
+    throw new Error("Port is required.");
+  }
+  return `http://${host}:${port}`;
+}
+
+function getToken() {
+  const token = secretInput.value;
+  if (!token) {
+    throw new Error("Secret key is required.");
+  }
+  return token;
+}
+
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, options);
+  const raw = await response.text();
+
+  let data = {};
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = { message: raw.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim() };
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data.error || data.message || `Request failed (${response.status})`);
+  }
+
+  return data;
+}
+
+async function postJson(endpoint, body) {
+  const token = getToken();
+  return requestJson(`${getBaseUrl()}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, token }),
+  });
+}
+
+async function getJson(endpoint, withToken = false) {
+  let url = `${getBaseUrl()}${endpoint}`;
+  if (withToken) {
+    const token = getToken();
+    const join = url.includes("?") ? "&" : "?";
+    url = `${url}${join}token=${encodeURIComponent(token)}`;
+  }
+  return requestJson(url);
+}
+
+function setConnectionState(type, text) {
+  connState.className = `status ${type}`;
+  connState.textContent = text;
+}
+
+function showToast(message, type = "success") {
+  toastEl.textContent = message;
+  toastEl.className = `toast show ${type}`;
+  clearTimeout(state.toastTimer);
+  state.toastTimer = setTimeout(() => {
+    toastEl.classList.remove("show");
+  }, 2600);
+}
+
+function isFeatureEnabled(feature) {
+  if (!state.capabilities || !state.capabilities.features) {
+    return true;
+  }
+  return Boolean(state.capabilities.features[feature]);
+}
+
+function setFeatureCardEnabled(card, enabled) {
+  card.classList.toggle("feature-disabled", !enabled);
+  card.querySelectorAll("button, input").forEach((control) => {
+    control.disabled = !enabled;
+  });
+}
+
+function applyCapabilities(capabilities) {
+  state.capabilities = capabilities;
+
+  const features = capabilities && capabilities.features ? capabilities.features : null;
+  const missing = capabilities && capabilities.missing_dependencies ? capabilities.missing_dependencies : {};
+
+  document.querySelectorAll("[data-feature]").forEach((card) => {
+    const key = card.dataset.feature;
+    const enabled = features ? Boolean(features[key]) : true;
+    setFeatureCardEnabled(card, enabled);
+  });
+
+  document.querySelectorAll("[data-note]").forEach((note) => {
+    const key = note.dataset.note;
+    if (!features || features[key]) {
+      note.classList.remove("show");
+      note.textContent = "";
+      return;
+    }
+    note.textContent = missing[key] ? `Install: ${missing[key]}` : "Feature unavailable on this machine.";
+    note.classList.add("show");
+  });
+
+  if (!capabilities) {
+    depNote.textContent = "Run Test and Sync to detect available controls on this PC.";
+    return;
+  }
+
+  const keys = Object.keys(missing);
+  depNote.textContent = keys.length
+    ? `Limited features: ${keys.map((name) => `${name}: ${missing[name]}`).join(" | ")}`
+    : "All features are available.";
+}
+
+async function testConnection(options = {}) {
+  const { silent = false } = options;
+
+  try {
+    saveConnection(false);
+    setConnectionState("checking", "Checking");
+    await getJson("/health", false);
+
+    if (!secretInput.value) {
+      applyCapabilities(null);
+      setConnectionState("warning", "Reachable, key missing");
+      if (!silent) {
+        showToast("Server reachable. Enter secret key to unlock controls.", "warning");
+      }
+      return;
+    }
+
+    const capabilities = await getJson("/capabilities", true);
+    applyCapabilities(capabilities);
+    setConnectionState("online", "Connected");
+
+    if (state.tab === "monitor" && isFeatureEnabled("stats")) {
+      startStatsLoop();
+    } else {
+      stopStatsLoop();
+    }
+    if (isFeatureEnabled("volume")) {
+      fetchVolume(true);
+    }
+
+    if (!silent) {
+      showToast("Connected and synchronized.", "success");
+    }
+  } catch (error) {
+    applyCapabilities(null);
+    setConnectionState("offline", "Offline");
+    stopStatsLoop();
+    if (!silent) {
+      showToast(error.message || "Unable to connect.", "error");
+    }
+  }
+}
+
+async function sendAction(action) {
+  if (!isFeatureEnabled("power_basic")) {
+    showToast("Basic power control unavailable.", "warning");
+    return;
+  }
+  try {
+    const data = await postJson("/action", { action });
+    showToast(data.message || `Executed ${action}.`, "success");
+  } catch (error) {
+    showToast(error.message || "Action failed.", "error");
+  }
+}
+
+function confirmShutdown() {
+  if (confirm("Confirm shutdown for this PC?")) {
+    sendAction("shutdown");
+  }
+}
+
+async function sendPower(action) {
+  if (!isFeatureEnabled("power_advanced")) {
+    showToast("Advanced power control unavailable.", "warning");
+    return;
+  }
+  try {
+    const data = await postJson("/power", { action });
+    showToast(data.message || "Power action sent.", "success");
+  } catch (error) {
+    showToast(error.message || "Power action failed.", "error");
+  }
+}
+
+async function scheduleShutdown() {
+  if (!isFeatureEnabled("power_advanced")) {
+    showToast("Advanced power control unavailable.", "warning");
+    return;
+  }
+
+  const input = byId("scheduleMin");
+  const minutes = Math.max(1, Math.min(720, parseInt(input.value || "30", 10)));
+  input.value = String(minutes);
+
+  try {
+    const data = await postJson("/power", { action: "schedule", minutes });
+    showToast(data.message || `Shutdown scheduled in ${minutes} min.`, "success");
+  } catch (error) {
+    showToast(error.message || "Scheduling failed.", "error");
+  }
+}
+
+function onVolSlide(value, sync = false) {
+  volValue.textContent = `${value}%`;
+  if (sync) {
+    queueVolumeSet(value);
+  }
+}
+
+function queueVolumeSet(level) {
+  clearTimeout(state.volumeTimer);
+  state.volumeTimer = setTimeout(() => {
+    state.volumeTimer = null;
+    setVolume(level, true);
+  }, 35);
+}
+
+async function fetchVolume(silent = false) {
+  if (!isFeatureEnabled("volume")) {
+    return;
+  }
+  try {
+    const data = await postJson("/volume", { action: "get" });
+    if (typeof data.volume === "number") {
+      volSlider.value = String(data.volume);
+      volValue.textContent = `${data.volume}%`;
+    }
+    state.muted = Boolean(data.muted);
+    muteBtn.textContent = state.muted ? "Unmute" : "Mute";
+    if (!silent) {
+      showToast("Volume synchronized.", "success");
+    }
+  } catch (error) {
+    if (!silent) {
+      showToast(error.message || "Volume read failed.", "error");
+    }
+  }
+}
+
+async function setVolume(level, silent = true) {
+  if (!isFeatureEnabled("volume")) {
+    if (!silent) {
+      showToast("Volume control unavailable.", "warning");
+    }
+    return;
+  }
+  try {
+    const safe = Math.max(0, Math.min(100, parseInt(level, 10)));
+    await postJson("/volume", { action: "set", level: safe });
+    volValue.textContent = `${safe}%`;
+  } catch (error) {
+    if (!silent) {
+      showToast(error.message || "Volume update failed.", "error");
+    }
+  }
+}
+
+function setStepVolume(step) {
+  const current = parseInt(volSlider.value, 10) || 0;
+  const next = Math.max(0, Math.min(100, current + step));
+  volSlider.value = String(next);
+  volValue.textContent = `${next}%`;
+  setVolume(next);
+}
+
+async function toggleMute() {
+  if (!isFeatureEnabled("volume")) {
+    showToast("Volume control unavailable.", "warning");
+    return;
+  }
+  try {
+    const action = state.muted ? "unmute" : "mute";
+    const data = await postJson("/volume", { action });
+    state.muted = Boolean(data.muted);
+    muteBtn.textContent = state.muted ? "Unmute" : "Mute";
+    showToast(state.muted ? "Muted." : "Unmuted.", "success");
+  } catch (error) {
+    showToast(error.message || "Mute toggle failed.", "error");
+  }
+}
+
+async function sendMedia(action) {
+  if (!isFeatureEnabled("media")) {
+    showToast("Media keys unavailable.", "warning");
+    return;
+  }
+  try {
+    await postJson("/media", { action });
+    showToast(`Media action: ${action}`, "success");
+  } catch (error) {
+    showToast(error.message || "Media action failed.", "error");
+  }
+}
+
+function setBar(id, value, threshold) {
+  const safe = Math.max(0, Math.min(100, Number(value) || 0));
+  const fill = byId(id);
+  fill.style.width = `${safe}%`;
+  fill.classList.toggle("warn", safe >= threshold);
+}
+
+async function fetchStats(silent = false) {
+  if (!isFeatureEnabled("stats")) {
+    return;
+  }
+  try {
+    const data = await getJson("/stats", true);
+
+    byId("cpuVal").textContent = `${Math.round(data.cpu || 0)}%`;
+    byId("ramVal").textContent = `${Math.round(data.ram || 0)}%`;
+    byId("diskVal").textContent = `${Math.round(data.disk || 0)}%`;
+    byId("uptimeVal").textContent = `Uptime: ${data.uptime || "--"}`;
+
+    setBar("cpuBar", data.cpu, 80);
+    setBar("ramBar", data.ram, 80);
+    setBar("diskBar", data.disk, 85);
+  } catch (error) {
+    if (!silent) {
+      showToast(error.message || "Stats fetch failed.", "error");
+    }
+  }
+}
+
+function startStatsLoop() {
+  stopStatsLoop();
+  fetchStats(true);
+  state.statsTimer = setInterval(() => fetchStats(true), 3000);
+}
+
+function stopStatsLoop() {
+  if (state.statsTimer) {
+    clearInterval(state.statsTimer);
+    state.statsTimer = null;
+  }
+}
+
+async function captureScreenshot() {
+  if (!isFeatureEnabled("screenshot")) {
+    showToast("Screenshot unavailable.", "warning");
+    return;
+  }
+  showToast("Capturing screenshot...", "warning");
+  try {
+    const data = await getJson("/screenshot", true);
+    if (data.image) {
+      byId("screenBox").innerHTML = `<img src="data:image/jpeg;base64,${data.image}" alt="Desktop screenshot">`;
+      showToast("Screenshot captured.", "success");
+    } else {
+      showToast(data.error || "Screenshot failed.", "error");
+    }
+  } catch (error) {
+    showToast(error.message || "Screenshot failed.", "error");
+  }
+}
+
+async function sendMouse(action, extra = {}, notify = false) {
+  if (!isFeatureEnabled("mouse")) {
+    if (notify) {
+      showToast("Mouse control unavailable.", "warning");
+    }
+    return;
+  }
+  try {
+    await postJson("/mouse", { action, ...extra });
+    if (notify) {
+      showToast(`Mouse action: ${action}`, "success");
+    }
+  } catch (error) {
+    if (notify) {
+      showToast(error.message || "Mouse action failed.", "error");
+    }
+  }
+}
+
+function queueMouseMove(dx, dy) {
+  if (!state.moveQueue) {
+    state.moveQueue = { dx: 0, dy: 0 };
+  }
+  state.moveQueue.dx += dx;
+  state.moveQueue.dy += dy;
+
+  if (!state.moveTimer) {
+    state.moveTimer = setTimeout(flushMouseMove, 8);
+  }
+}
+
+function flushMouseMove() {
+  state.moveTimer = null;
+  if (state.moveInFlight || !state.moveQueue) {
+    return;
+  }
+
+  const payload = state.moveQueue;
+  state.moveQueue = null;
+  if (!payload.dx && !payload.dy) {
+    return;
+  }
+
+  state.moveInFlight = true;
+  sendMouse("move", payload, false).finally(() => {
+    state.moveInFlight = false;
+    if (state.moveQueue && !state.moveTimer) {
+      state.moveTimer = setTimeout(flushMouseMove, 8);
+    }
+  });
+}
+
+function initTouchpad() {
+  const touchpad = byId("touchpad");
+  let tracking = false;
+  let lastX = 0;
+  let lastY = 0;
+  const sensitivity = 1.6;
+
+  touchpad.addEventListener("pointerdown", (event) => {
+    if (!isFeatureEnabled("mouse")) {
+      return;
+    }
+    tracking = true;
+    lastX = event.clientX;
+    lastY = event.clientY;
+    touchpad.setPointerCapture(event.pointerId);
+  });
+
+  touchpad.addEventListener("pointermove", (event) => {
+    if (!tracking) {
+      return;
+    }
+    const dx = Math.round((event.clientX - lastX) * sensitivity);
+    const dy = Math.round((event.clientY - lastY) * sensitivity);
+    lastX = event.clientX;
+    lastY = event.clientY;
+    if (dx || dy) {
+      queueMouseMove(dx, dy);
+    }
+  });
+
+  const stop = () => {
+    tracking = false;
+  };
+  touchpad.addEventListener("pointerup", stop);
+  touchpad.addEventListener("pointercancel", stop);
+  touchpad.addEventListener("pointerleave", stop);
+}
+
+async function sendText() {
+  if (!isFeatureEnabled("keyboard")) {
+    showToast("Keyboard control unavailable.", "warning");
+    return;
+  }
+  const text = typeInput.value;
+  if (!text.trim()) {
+    showToast("Enter text first.", "warning");
+    return;
+  }
+  try {
+    await postJson("/keyboard", { action: "type", text });
+    typeInput.value = "";
+    showToast("Text sent.", "success");
+  } catch (error) {
+    showToast(error.message || "Text send failed.", "error");
+  }
+}
+
+async function sendKey(key) {
+  if (!isFeatureEnabled("keyboard")) {
+    showToast("Keyboard control unavailable.", "warning");
+    return;
+  }
+  try {
+    await postJson("/keyboard", { action: "press", key });
+  } catch (error) {
+    showToast(error.message || "Key send failed.", "error");
+  }
+}
+
+async function sendHotkey(keys) {
+  if (!isFeatureEnabled("keyboard")) {
+    showToast("Keyboard control unavailable.", "warning");
+    return;
+  }
+  try {
+    await postJson("/keyboard", { action: "hotkey", keys });
+    showToast(keys.join(" + "), "success");
+  } catch (error) {
+    showToast(error.message || "Hotkey failed.", "error");
+  }
+}
+</script>
+</body>
+</html>
